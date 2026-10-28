@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Anggota - Perpustakaan Digital{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-bold text-slate-800 mb-6">👋 Selamat datang, {{ user.name }}!</h1>
+
+<!-- Kartu ringkasan -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-amber-500">
+        <p class="text-sm text-slate-500">Buku Sedang Dipinjam</p>
+        <p class="text-3xl font-bold text-slate-800">{{ active_loans|length }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-green-500">
+        <p class="text-sm text-slate-500">Riwayat Total Peminjaman</p>
+        <p class="text-3xl font-bold text-slate-800">{{ my_loans|length }}</p>
+    </div>
+</div>
+
+<!-- Daftar pinjaman -->
+<div class="bg-white p-6 rounded-xl shadow-md">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">📖 Peminjaman Saya</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-700 text-white text-sm">
+                    <th class="p-2 border">Buku</th>
+                    <th class="p-2 border">Tanggal Pinjam</th>
+                    <th class="p-2 border">Tanggal Kembali</th>
+                    <th class="p-2 border">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in my_loans %}
+                <tr class="hover:bg-slate-50 border-b text-sm">
+                    <td class="p-2 font-semibold text-slate-700">{{ loan.book_title }}</td>
+                    <td class="p-2 text-slate-600">{{ loan.borrow_date }}</td>
+                    <td class="p-2 text-slate-600">{{ loan.return_date or '—' }}</td>
+                    <td class="p-2">
+                        {% if loan.status == 'dipinjam' %}
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">Dipinjam</span>
+                        {% else %}
+                        <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">Sudah Kembali</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="p-3 text-center text-slate-500">Anda belum pernah meminjam buku.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="text-sm text-slate-500 mt-4">
+        Untuk meminjam buku, silakan datang ke perpustakaan — admin akan mencatat peminjaman Anda.
+    </p>
+</div>
+
+<div class="mt-6">
+    <a href="/" class="text-blue-600 hover:underline">← Lihat katalog buku</a>
+</div>
+{% endblock %}

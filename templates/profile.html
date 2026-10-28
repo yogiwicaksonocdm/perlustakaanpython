@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Profil - Perpustakaan Digital{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Kartu info akun -->
+    <div class="bg-white p-6 rounded-xl shadow-md">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-xl font-bold text-slate-800">👤 Profil Saya</h2>
+            <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-blue-100 text-blue-800' if user.role == 'admin' else 'bg-slate-100 text-slate-700' }}">
+                {{ 'Admin' if user.role == 'admin' else 'Anggota' }}
+            </span>
+        </div>
+        <dl class="space-y-2 text-sm">
+            <div class="flex justify-between"><dt class="text-slate-500">Email</dt><dd class="font-medium text-slate-700">{{ user.email }}</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Nama</dt><dd class="font-medium text-slate-700">{{ user.name }}</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Telepon</dt><dd class="font-medium text-slate-700">{{ user.phone or '—' }}</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Alamat</dt><dd class="font-medium text-slate-700 text-right max-w-[60%]">{{ user.address or '—' }}</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Bergabung</dt><dd class="font-medium text-slate-700">{{ user.joined_at or '—' }}</dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Status</dt>
+                <dd class="font-medium {{ 'text-green-700' if user.get('active', true) else 'text-red-700' }}">
+                    {{ 'Aktif' if user.get('active', true) else 'Diblokir' }}
+                </dd>
+            </div>
+        </dl>
+        <div class="mt-4 p-3 bg-slate-50 rounded-lg border text-sm">
+            <p class="font-semibold text-slate-700">Sedang dipinjam: {{ active_loans|length }} buku</p>
+            {% for loan in active_loans %}
+            <p class="text-slate-600">• {{ loan.book_title }} (sejak {{ loan.borrow_date }})</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Form edit profil -->
+    <div class="bg-white p-6 rounded-xl shadow-md md:col-span-2">
+        <h2 class="text-xl font-bold text-slate-800 mb-4">✏️ Edit Profil</h2>
+        <form action="/profil" method="POST" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Nama Lengkap</label>
+                <input type="text" name="name" value="{{ user.name }}" required class="w-full p-2 border rounded mt-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">No. Telepon</label>
+                <input type="tel" name="phone" value="{{ user.phone or '' }}" class="w-full p-2 border rounded mt-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Alamat</label>
+                <textarea name="address" rows="2" class="w-full p-2 border rounded mt-1">{{ user.address or '' }}</textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Password Baru (kosongkan jika tidak ingin mengubah)</label>
+                <input type="password" name="password" minlength="6" placeholder="Min. 6 karakter" class="w-full p-2 border rounded mt-1">
+            </div>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded transition">
+                Simpan Perubahan
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

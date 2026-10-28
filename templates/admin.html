@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Dashboard Admin - Perpustakaan Digital{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-bold text-slate-800 mb-6">🛠️ Dashboard Admin</h1>
+
+<!-- Kartu Statistik -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500">
+        <p class="text-sm text-slate-500">Total Judul Buku</p>
+        <p class="text-3xl font-bold text-slate-800">{{ stats.total_books }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-green-500">
+        <p class="text-sm text-slate-500">Total Stok</p>
+        <p class="text-3xl font-bold text-slate-800">{{ stats.total_stock }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-indigo-500">
+        <p class="text-sm text-slate-500">Total Anggota</p>
+        <p class="text-3xl font-bold text-slate-800">{{ stats.total_members }}</p>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-amber-500">
+        <p class="text-sm text-slate-500">Peminjaman Aktif</p>
+        <p class="text-3xl font-bold text-slate-800">{{ stats.active_loans }}</p>
+    </div>
+</div>
+
+<!-- Pencatatan Peminjaman -->
+<div class="bg-white p-6 rounded-xl shadow-md mb-8">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">📖 Catat Peminjaman Baru</h2>
+    <form action="/loans/add" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Anggota Aktif</label>
+            <select name="member_id" required class="w-full p-2 border rounded mt-1 bg-white">
+                {% for m in active_members %}
+                <option value="{{ m.id }}">{{ m.name }} ({{ m.email }})</option>
+                {% else %}
+                <option value="">— Belum ada anggota aktif —</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Buku Tersedia</label>
+            <select name="book_id" required class="w-full p-2 border rounded mt-1 bg-white">
+                {% for b in available_books %}
+                <option value="{{ b.id }}">{{ b.title }} — {{ b.author }} (stok {{ b.get('stock', 0) }})</option>
+                {% else %}
+                <option value="">— Tidak ada buku tersedia —</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition">
+            Catat Peminjaman
+        </button>
+    </form>
+
+    <h3 class="font-semibold text-slate-700 mt-6 mb-2">Peminjaman Aktif</h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-700 text-white text-sm">
+                    <th class="p-2 border">Buku</th>
+                    <th class="p-2 border">Peminjam</th>
+                    <th class="p-2 border">Tanggal Pinjam</th>
+                    <th class="p-2 border text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loan in loans %}
+                <tr class="hover:bg-slate-50 border-b text-sm">
+                    <td class="p-2 font-semibold text-slate-700">{{ loan.book_title }}</td>
+                    <td class="p-2 text-slate-600">{{ loan.user_name }}</td>
+                    <td class="p-2 text-slate-600">{{ loan.borrow_date }}</td>
+                    <td class="p-2 text-center">
+                        <form action="/loans/{{ loan.id }}/return" method="POST" class="inline">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs font-semibold py-1 px-3 rounded">
+                                ✓ Kembalikan
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="p-3 text-center text-slate-500">Tidak ada peminjaman aktif.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Manajemen Anggota -->
+<div class="bg-white p-6 rounded-xl shadow-md mb-8">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">👥 Manajemen Anggota</h2>
+
+    <details class="mb-4">
+        <summary class="cursor-pointer text-blue-600 font-medium hover:underline">+ Tambah Anggota Manual</summary>
+        <form action="/anggota/add" method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-3 mt-3 bg-slate-50 p-4 rounded-lg border">
+            <input type="text" name="name" placeholder="Nama Lengkap" required class="p-2 border rounded">
+            <input type="email" name="email" placeholder="Email" required class="p-2 border rounded">
+            <input type="tel" name="phone" placeholder="No. Telepon" class="p-2 border rounded">
+            <input type="password" name="password" placeholder="Password (min. 6)" required minlength="6" class="p-2 border rounded">
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition">Tambah</button>
+        </form>
+    </details>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-700 text-white text-sm">
+                    <th class="p-2 border">Nama</th>
+                    <th class="p-2 border">Email</th>
+                    <th class="p-2 border">Telepon</th>
+                    <th class="p-2 border">Bergabung</th>
+                    <th class="p-2 border">Peran</th>
+                    <th class="p-2 border">Status</th>
+                    <th class="p-2 border text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in members %}
+                <tr class="hover:bg-slate-50 border-b text-sm">
+                    <td class="p-2 font-semibold text-slate-700">{{ m.name }}{% if m.id == current_user.id %} <span class="text-xs text-blue-600">(Anda)</span>{% endif %}</td>
+                    <td class="p-2 text-slate-600">{{ m.email }}</td>
+                    <td class="p-2 text-slate-600">{{ m.phone or '-' }}</td>
+                    <td class="p-2 text-slate-600">{{ m.joined_at or '-' }}</td>
+                    <td class="p-2">
+                        <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-blue-100 text-blue-800' if m.role == 'admin' else 'bg-slate-100 text-slate-700' }}">
+                            {{ 'Admin' if m.role == 'admin' else 'Anggota' }}
+                        </span>
+                    </td>
+                    <td class="p-2">
+                        <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-green-100 text-green-800' if m.get('active', true) else 'bg-red-100 text-red-800' }}">
+                            {{ 'Aktif' if m.get('active', true) else 'Diblokir' }}
+                        </span>
+                    </td>
+                    <td class="p-2 text-center">
+                        {% if m.id != current_user.id %}
+                        <div class="flex gap-2 justify-center">
+                            <form action="/anggota/{{ m.id }}/toggle" method="POST" class="inline">
+                                <button type="submit" class="text-amber-600 hover:underline text-xs">
+                                    {{ 'Blokir' if m.get('active', true) else 'Buka Blokir' }}
+                                </button>
+                            </form>
+                            <form action="/anggota/{{ m.id }}/delete" method="POST" class="inline" onsubmit="return confirm('Yakin ingin menghapus anggota ini?')">
+                                <button type="submit" class="text-red-600 hover:underline text-xs">Hapus</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <span class="text-xs text-slate-400">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="p-3 text-center text-slate-500">Belum ada anggota.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Manajemen Buku -->
+<div class="bg-white p-6 rounded-xl shadow-md">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">📚 Manajemen Buku</h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-slate-700 text-white text-sm">
+                    <th class="p-2 border">Judul</th>
+                    <th class="p-2 border">Kategori</th>
+                    <th class="p-2 border">Stok</th>
+                    <th class="p-2 border">Status</th>
+                    <th class="p-2 border text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in books %}
+                <tr class="hover:bg-slate-50 border-b text-sm">
+                    <td class="p-2 font-semibold text-slate-700">{{ b.title }}</td>
+                    <td class="p-2 text-slate-600">{{ b.get('category') or 'Tanpa Kategori' }}</td>
+                    <td class="p-2 text-center text-slate-700">{{ b.get('stock', 0) }}</td>
+                    <td class="p-2">
+                        <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-green-100 text-green-800' if b.status == 'Tersedia' else 'bg-amber-100 text-amber-800' }}">
+                            {{ b.status }}
+                        </span>
+                    </td>
+                    <td class="p-2 text-center">
+                        <a href="/edit/{{ b.id }}" class="text-blue-600 hover:underline text-xs">Edit</a>
+                        <a href="/delete/{{ b.id }}" onclick="return confirm('Yakin ingin menghapus?')" class="text-red-600 hover:underline text-xs ml-2">Hapus</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="p-3 text-center text-slate-500">Belum ada buku. Tambah lewat halaman Katalog.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
