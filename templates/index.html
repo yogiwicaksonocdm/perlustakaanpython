@@ -7,18 +7,51 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen p-6">
-    <div class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-md">
+    <div class="max-w-6xl mx-auto bg-white p-8 rounded-xl shadow-md">
         <h1 class="text-3xl font-bold text-slate-800 mb-6">📚 Perpustakaan Digital</h1>
 
         <!-- Form Tambah Buku -->
-        <form action="/add" method="POST" class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-8 bg-slate-50 p-4 rounded-lg border">
+        <form action="/add" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 bg-slate-50 p-4 rounded-lg border">
             <input type="text" name="title" placeholder="Judul Buku" required class="p-2 border rounded focus:outline-blue-500">
             <input type="text" name="author" placeholder="Penulis" required class="p-2 border rounded focus:outline-blue-500">
             <input type="number" name="year" placeholder="Tahun Terbit" class="p-2 border rounded focus:outline-blue-500">
             <input type="text" name="isbn" placeholder="ISBN" class="p-2 border rounded focus:outline-blue-500">
+            <input type="text" name="category" placeholder="Kategori (mis. Novel, Sains)" list="category-list" class="p-2 border rounded focus:outline-blue-500">
+            <input type="number" name="stock" placeholder="Jumlah Stok" min="0" class="p-2 border rounded focus:outline-blue-500">
+            <select name="status" class="p-2 border rounded bg-white focus:outline-blue-500">
+                <option value="Tersedia" selected>Tersedia</option>
+                <option value="Dipinjam">Dipinjam</option>
+            </select>
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition">
                 + Tambah Buku
             </button>
+        </form>
+        <datalist id="category-list">
+            {% for cat in categories %}
+            <option value="{{ cat }}"></option>
+            {% endfor %}
+        </datalist>
+
+        <!-- Pencarian & Filter -->
+        <form method="GET" action="/" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+            <input type="text" name="q" value="{{ current_q }}" placeholder="🔍 Cari judul, penulis, atau ISBN..." class="md:col-span-2 p-2 border rounded focus:outline-blue-500">
+            <select name="category" class="p-2 border rounded bg-white focus:outline-blue-500">
+                <option value="">Semua Kategori</option>
+                {% for cat in categories %}
+                <option value="{{ cat }}" {{ 'selected' if current_category == cat }}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+            <div class="flex gap-3">
+                <select name="status" class="flex-1 p-2 border rounded bg-white focus:outline-blue-500">
+                    <option value="">Semua Status</option>
+                    <option value="Tersedia" {{ 'selected' if current_status == 'Tersedia' }}>Tersedia</option>
+                    <option value="Dipinjam" {{ 'selected' if current_status == 'Dipinjam' }}>Dipinjam</option>
+                </select>
+                <button type="submit" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded transition">Filter</button>
+                {% if current_q or current_category or current_status %}
+                <a href="/" class="text-slate-500 hover:text-slate-800 underline self-center whitespace-nowrap">Reset</a>
+                {% endif %}
+            </div>
         </form>
 
         <!-- Tabel Daftar Buku -->
@@ -28,8 +61,10 @@
                     <tr class="bg-slate-800 text-white">
                         <th class="p-3 border">Judul</th>
                         <th class="p-3 border">Penulis</th>
+                        <th class="p-3 border">Kategori</th>
                         <th class="p-3 border">Tahun</th>
                         <th class="p-3 border">ISBN</th>
+                        <th class="p-3 border text-center">Stok</th>
                         <th class="p-3 border">Status</th>
                         <th class="p-3 border text-center">Aksi</th>
                     </tr>
@@ -39,12 +74,20 @@
                     <tr class="hover:bg-slate-50 border-b">
                         <td class="p-3 font-semibold text-slate-700">{{ book.title }}</td>
                         <td class="p-3 text-slate-600">{{ book.author }}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">
+                                {{ book.get('category') or 'Tanpa Kategori' }}
+                            </span>
+                        </td>
                         <td class="p-3 text-slate-600">{{ book.year }}</td>
                         <td class="p-3 text-slate-600">{{ book.isbn or '-' }}</td>
+                        <td class="p-3 text-center text-slate-700 font-semibold">{{ book.get('stock', 0) }}</td>
                         <td class="p-3">
-                            <span class="px-2 py-1 text-xs rounded-full {{ 'bg-green-100 text-green-800' if book.status == 'Tersedia' else 'bg-amber-100 text-amber-800' }}">
-                                {{ book.status }}
-                            </span>
+                            {% if book.status == 'Dipinjam' %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800">Dipinjam</span>
+                            {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Tersedia</span>
+                            {% endif %}
                         </td>
                         <td class="p-3 text-center space-x-2">
                             <a href="/edit/{{ book.id }}" class="text-blue-600 hover:underline">Edit</a>
@@ -53,7 +96,13 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="p-4 text-center text-slate-500">Belum ada data buku. Silakan tambahkan!</td>
+                        <td colspan="8" class="p-4 text-center text-slate-500">
+                            {% if current_q or current_category or current_status %}
+                            Tidak ada buku yang cocok dengan pencarian/filter.
+                            {% else %}
+                            Belum ada data buku. Silakan tambahkan!
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

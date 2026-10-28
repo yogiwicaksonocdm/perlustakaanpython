@@ -20,12 +20,20 @@
                 <input type="text" name="author" value="{{ book.author }}" required class="w-full p-2 border rounded mt-1">
             </div>
             <div>
+                <label class="block text-sm font-medium text-slate-700">Kategori</label>
+                <input type="text" name="category" value="{{ book.get('category', '') }}" placeholder="Mis. Novel, Sains, Sejarah" class="w-full p-2 border rounded mt-1">
+            </div>
+            <div>
                 <label class="block text-sm font-medium text-slate-700">Tahun Terbit</label>
                 <input type="number" name="year" value="{{ book.year }}" class="w-full p-2 border rounded mt-1">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">ISBN</label>
                 <input type="text" name="isbn" value="{{ book.isbn }}" class="w-full p-2 border rounded mt-1">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700">Jumlah Stok</label>
+                <input type="number" name="stock" value="{{ book.get('stock', 0) }}" min="0" class="w-full p-2 border rounded mt-1">
             </div>
             <div>
                 <label class="block text-sm font-medium text-slate-700">Status</label>
