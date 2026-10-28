@@ -67,6 +67,7 @@
                     <th class="p-3 border">Tahun</th>
                     <th class="p-3 border">ISBN</th>
                     <th class="p-3 border text-center">Stok</th>
+                    <th class="p-3 border text-center">Dipinjam</th>
                     <th class="p-3 border">Status</th>
                     {% if current_user and current_user.role == 'admin' %}
                     <th class="p-3 border text-center">Aksi</th>
@@ -95,8 +96,9 @@
                     <td class="p-3 text-slate-600">{{ book.year }}</td>
                     <td class="p-3 text-slate-600">{{ book.isbn or '-' }}</td>
                     <td class="p-3 text-center text-slate-700 font-semibold">{{ book.get('stock', 0) }}</td>
+                    <td class="p-3 text-center text-slate-700">{{ book.loan_count }}</td>
                     <td class="p-3">
-                        {% if book.status == 'Dipinjam' %}
+                        {% if book.display_status == 'Dipinjam' %}
                         <span class="px-2 py-1 text-xs rounded-full bg-amber-100 text-amber-800">Dipinjam</span>
                         {% else %}
                         <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Tersedia</span>
@@ -111,7 +113,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="{{ 10 if current_user and current_user.role == 'admin' else 9 }}" class="p-4 text-center text-slate-500">
+                    <td colspan="{{ 11 if current_user and current_user.role == 'admin' else 10 }}" class="p-4 text-center text-slate-500">
                         {% if current_q or current_category or current_status %}
                         Tidak ada buku yang cocok dengan pencarian/filter.
                         {% else %}

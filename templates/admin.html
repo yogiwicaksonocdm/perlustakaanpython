@@ -165,6 +165,7 @@
                     <th class="p-2 border">Judul</th>
                     <th class="p-2 border">Kategori</th>
                     <th class="p-2 border">Stok</th>
+                    <th class="p-2 border">Dipinjam</th>
                     <th class="p-2 border">Status</th>
                     <th class="p-2 border text-center">Aksi</th>
                 </tr>
@@ -175,9 +176,10 @@
                     <td class="p-2 font-semibold text-slate-700">{{ b.title }}</td>
                     <td class="p-2 text-slate-600">{{ b.get('category') or 'Tanpa Kategori' }}</td>
                     <td class="p-2 text-center text-slate-700">{{ b.get('stock', 0) }}</td>
+                    <td class="p-2 text-center text-slate-700">{{ b.loan_count }}</td>
                     <td class="p-2">
-                        <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-green-100 text-green-800' if b.status == 'Tersedia' else 'bg-amber-100 text-amber-800' }}">
-                            {{ b.status }}
+                        <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-green-100 text-green-800' if b.display_status == 'Tersedia' else 'bg-amber-100 text-amber-800' }}">
+                            {{ b.display_status }}
                         </span>
                     </td>
                     <td class="p-2 text-center">
@@ -186,7 +188,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="5" class="p-3 text-center text-slate-500">Belum ada buku. Tambah lewat halaman Katalog.</td></tr>
+                <tr><td colspan="6" class="p-3 text-center text-slate-500">Belum ada buku. Tambah lewat halaman Katalog.</td></tr>
                 {% endfor %}
             </tbody>
         </table>
