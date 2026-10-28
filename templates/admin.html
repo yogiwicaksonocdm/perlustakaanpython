@@ -1,30 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Dashboard Admin - Perpustakaan Digital{% endblock %}
 {% block content %}
-<h1 class="text-3xl font-bold text-slate-800 mb-6">🛠️ Dashboard Admin</h1>
+<h1 class="text-2xl md:text-3xl font-bold text-slate-800 mb-6">🛠️ Dashboard Admin</h1>
 
 <!-- Kartu Statistik -->
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-blue-500">
         <p class="text-sm text-slate-500">Total Judul Buku</p>
-        <p class="text-3xl font-bold text-slate-800">{{ stats.total_books }}</p>
+        <p class="text-2xl sm:text-3xl font-bold text-slate-800">{{ stats.total_books }}</p>
     </div>
     <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-green-500">
         <p class="text-sm text-slate-500">Total Stok</p>
-        <p class="text-3xl font-bold text-slate-800">{{ stats.total_stock }}</p>
+        <p class="text-2xl sm:text-3xl font-bold text-slate-800">{{ stats.total_stock }}</p>
     </div>
     <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-indigo-500">
         <p class="text-sm text-slate-500">Total Anggota</p>
-        <p class="text-3xl font-bold text-slate-800">{{ stats.total_members }}</p>
+        <p class="text-2xl sm:text-3xl font-bold text-slate-800">{{ stats.total_members }}</p>
     </div>
     <div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-amber-500">
         <p class="text-sm text-slate-500">Peminjaman Aktif</p>
-        <p class="text-3xl font-bold text-slate-800">{{ stats.active_loans }}</p>
+        <p class="text-2xl sm:text-3xl font-bold text-slate-800">{{ stats.active_loans }}</p>
     </div>
 </div>
 
 <!-- Pencatatan Peminjaman -->
-<div class="bg-white p-6 rounded-xl shadow-md mb-8">
+<div class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-8">
     <h2 class="text-xl font-bold text-slate-800 mb-4">📖 Catat Peminjaman Baru</h2>
     <form action="/loans/add" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <div>
@@ -86,7 +86,7 @@
 </div>
 
 <!-- Manajemen Anggota -->
-<div class="bg-white p-6 rounded-xl shadow-md mb-8">
+<div class="bg-white p-4 sm:p-6 rounded-xl shadow-md mb-8">
     <h2 class="text-xl font-bold text-slate-800 mb-4">👥 Manajemen Anggota</h2>
 
     <details class="mb-4">
@@ -156,7 +156,7 @@
 </div>
 
 <!-- Manajemen Buku -->
-<div class="bg-white p-6 rounded-xl shadow-md">
+<div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
     <h2 class="text-xl font-bold text-slate-800 mb-4">📚 Manajemen Buku</h2>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Kartu info akun -->
-    <div class="bg-white p-6 rounded-xl shadow-md">
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-xl font-bold text-slate-800">👤 Profil Saya</h2>
             <span class="px-2 py-0.5 text-xs rounded-full {{ 'bg-blue-100 text-blue-800' if user.role == 'admin' else 'bg-slate-100 text-slate-700' }}">
@@ -31,7 +31,7 @@
     </div>
 
     <!-- Form edit profil -->
-    <div class="bg-white p-6 rounded-xl shadow-md md:col-span-2">
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-md md:col-span-2">
         <h2 class="text-xl font-bold text-slate-800 mb-4">✏️ Edit Profil</h2>
         <form action="/profil" method="POST" class="space-y-4">
             <div>

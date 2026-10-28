@@ -5,37 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Perpustakaan Digital{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    {% block head %}{% endblock %}
 </head>
 <body class="bg-slate-100 min-h-screen flex flex-col">
-    <!-- Navbar -->
-    <nav class="bg-slate-800 text-white">
-        <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between flex-wrap gap-3">
-            <a href="/" class="font-bold text-lg">📚 Perpustakaan</a>
-            <div class="flex items-center gap-4 text-sm flex-wrap">
-                <a href="/" class="hover:text-blue-300">Katalog</a>
+    <!-- Navbar (responsif: dilipat di layar kecil) -->
+    <nav class="bg-slate-800 text-white sticky top-0 z-40 shadow">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between relative">
+            <a href="/" class="font-bold text-base sm:text-lg shrink-0">📚 <span class="hidden sm:inline">Perpustakaan</span></a>
+
+            <button id="nav-toggle" aria-label="Buka menu" class="md:hidden p-2 rounded hover:bg-slate-700 text-lg leading-none">☰</button>
+
+            <div id="nav-menu" class="hidden md:flex flex-col md:flex-row md:items-center gap-1 md:gap-4 text-sm
+                                       absolute md:static top-full left-0 right-0 bg-slate-800 md:bg-transparent
+                                       px-4 md:px-0 pb-4 md:pb-0 border-t border-slate-700 md:border-0 md:border-t-0 z-50">
+                <a href="/" class="hover:text-blue-300 py-2 md:py-0 border-b border-slate-700 md:border-0">Katalog</a>
                 {% if current_user %}
-                    <a href="/dashboard" class="hover:text-blue-300">Dashboard</a>
+                    <a href="/dashboard" class="hover:text-blue-300 py-2 md:py-0 border-b border-slate-700 md:border-0">Dashboard</a>
                     {% if current_user.role == 'admin' %}
-                    <a href="/admin" class="hover:text-blue-300">Admin</a>
+                    <a href="/admin" class="hover:text-blue-300 py-2 md:py-0 border-b border-slate-700 md:border-0">Admin</a>
                     {% endif %}
-                    <a href="/profil" class="hover:text-blue-300">Profil</a>
-                    <span class="hidden md:inline text-slate-400">|</span>
-                    <span class="hidden md:inline text-slate-300">{{ current_user.name }}
-                        <span class="ml-1 px-2 py-0.5 text-xs rounded-full {{ 'bg-blue-600' if current_user.role == 'admin' else 'bg-slate-600' }}">
-                            {{ 'Admin' if current_user.role == 'admin' else 'Anggota' }}
+                    <a href="/profil" class="hover:text-blue-300 py-2 md:py-0 border-b border-slate-700 md:border-0">Profil</a>
+                    <div class="flex items-center justify-between md:contents pt-2 md:pt-0">
+                        <span class="text-slate-300">{{ current_user.name }}
+                            <span class="ml-1 px-2 py-0.5 text-xs rounded-full {{ 'bg-blue-600' if current_user.role == 'admin' else 'bg-slate-600' }}">
+                                {{ 'Admin' if current_user.role == 'admin' else 'Anggota' }}
+                            </span>
                         </span>
-                    </span>
-                    <a href="/logout" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Keluar</a>
+                        <a href="/logout" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded md:inline-block">Keluar</a>
+                    </div>
                 {% else %}
-                    <a href="/login" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded">Masuk</a>
-                    <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded">Daftar</a>
+                    <div class="flex gap-2 pt-2 md:pt-0 md:contents">
+                        <a href="/login" class="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded flex-1 md:flex-none text-center">Masuk</a>
+                        <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded flex-1 md:flex-none text-center">Daftar</a>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </nav>
+    <script>
+        (function () {
+            var btn = document.getElementById("nav-toggle");
+            var menu = document.getElementById("nav-menu");
+            if (btn && menu) {
+                btn.addEventListener("click", function () { menu.classList.toggle("hidden"); });
+            }
+        })();
+    </script>
 
     <!-- Notifikasi flash -->
-    <div class="max-w-6xl mx-auto w-full px-6 mt-4 space-y-2">
+    <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 mt-4 space-y-2">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% for category, message in messages %}
             <div class="p-3 rounded-lg border text-sm {{ 'bg-green-100 border-green-300 text-green-800' if category == 'success' else 'bg-red-100 border-red-300 text-red-800' }}">
@@ -45,7 +63,7 @@
         {% endwith %}
     </div>
 
-    <main class="max-w-6xl mx-auto w-full px-6 py-6 flex-1">
+    <main class="max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
         {% block content %}{% endblock %}
     </main>
 

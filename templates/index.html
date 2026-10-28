@@ -1,7 +1,102 @@
 {% extends "base.html" %}
 {% block title %}Perpustakaan Digital{% endblock %}
+
+{% block head %}
+<style>
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+    50% { transform: translateY(-14px) rotate(var(--tilt, 0deg)); }
+  }
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(20px, -20px) scale(1.08); }
+  }
+  .float-card { animation: floaty 5s ease-in-out infinite; transition: transform .3s ease, box-shadow .3s ease; }
+  .float-card:hover { transform: translateY(-6px) scale(1.06) rotate(0deg) !important; box-shadow: 0 18px 40px rgba(0,0,0,.45); animation-play-state: paused; z-index: 10; }
+  .blob { animation: drift 9s ease-in-out infinite; }
+  .chip:hover { transform: translateY(-2px); }
+  @media (prefers-reduced-motion: reduce) {
+    .float-card, .blob { animation: none; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<h1 class="text-3xl font-bold text-slate-800 mb-6">📚 Katalog Buku</h1>
+
+<!-- ===== HERO / COVER HALAMAN DEPAN ===== -->
+<section id="beranda" class="relative overflow-hidden rounded-3xl mb-8 text-white bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900 shadow-xl">
+    <!-- Dekorasi blob bercahaya -->
+    <div class="blob absolute -top-16 -left-16 w-56 h-56 sm:w-72 sm:h-72 rounded-full bg-indigo-500 opacity-25 blur-3xl"></div>
+    <div class="blob absolute -bottom-20 right-10 w-64 h-64 sm:w-96 sm:h-96 rounded-full bg-fuchsia-500 opacity-20 blur-3xl" style="animation-delay:-4s"></div>
+    <div class="blob absolute top-1/3 left-1/2 w-40 h-40 rounded-full bg-amber-400 opacity-10 blur-3xl" style="animation-delay:-2s"></div>
+
+    <div class="relative grid grid-cols-1 md:grid-cols-2 gap-8 items-center px-6 py-10 md:px-12 md:py-16">
+        <!-- Kiri: teks & pencarian -->
+        <div>
+            <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-white/10 border border-white/20 backdrop-blur">
+                📚 {{ hero_stats.total_books }} judul • {{ hero_stats.total_available }} tersedia • {{ hero_stats.total_categories }} kategori
+            </span>
+            <h1 class="mt-4 text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
+                Temukan Buku<br>
+                <span class="bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400 bg-clip-text text-transparent">Favoritmu</span>
+            </h1>
+            <p class="mt-3 text-slate-300 text-sm sm:text-base max-w-md">
+                Cari berdasarkan judul, penulis, atau ISBN. Lihat langsung ketersediaan stok dan kategorinya tanpa perlu datang ke loket.
+            </p>
+
+            <!-- Pencarian interaktif dari hero -->
+            <form action="/" method="GET" class="mt-6 flex flex-col sm:flex-row gap-2 max-w-lg">
+                <input type="text" name="q" value="{{ current_q }}" placeholder="🔍 Cari buku..."
+                       class="flex-1 px-4 py-3 rounded-full text-slate-800 bg-white/95 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                <button type="submit" class="px-6 py-3 rounded-full bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-slate-900 font-semibold transition">
+                    Cari
+                </button>
+            </form>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+                {% for cat in top_categories %}
+                <a href="/?category={{ cat|urlencode }}" class="chip px-3 py-1.5 text-xs rounded-full bg-white/10 hover:bg-white/25 border border-white/15 backdrop-blur transition">
+                    {{ cat }}
+                </a>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="#katalog" class="px-5 py-2.5 rounded-full bg-white text-slate-900 font-semibold text-sm hover:bg-slate-200 transition">
+                    Lihat Katalog ↓
+                </a>
+                {% if not current_user %}
+                <a href="/register" class="px-5 py-2.5 rounded-full border border-white/30 text-white font-semibold text-sm hover:bg-white/10 transition">
+                    Daftar Anggota
+                </a>
+                {% elif current_user.role == 'admin' %}
+                <a href="/admin" class="px-5 py-2.5 rounded-full border border-white/30 text-white font-semibold text-sm hover:bg-white/10 transition">
+                    Dashboard Admin →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Kanan: kartu cover mengapung (interaktif) -->
+        <div class="relative h-56 sm:h-72 md:h-96 hidden sm:block" aria-hidden="true">
+            <div class="float-card absolute left-6 top-6 w-28 h-40 md:w-36 md:h-52 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 shadow-2xl flex flex-col justify-end p-3" style="--tilt:-8deg; animation-delay:0s">
+                <span class="text-2xl md:text-3xl">📗</span>
+                <p class="text-[10px] md:text-xs font-bold text-white/90 leading-tight mt-1">Novel<br>Terpopuler</p>
+            </div>
+            <div class="float-card absolute left-32 sm:left-40 md:left-44 top-2 w-28 h-40 md:w-36 md:h-52 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-600 shadow-2xl flex flex-col justify-end p-3" style="--tilt:4deg; animation-delay:-1.6s">
+                <span class="text-2xl md:text-3xl">📘</span>
+                <p class="text-[10px] md:text-xs font-bold text-white/90 leading-tight mt-1">Sains<br>&amp; Teknologi</p>
+            </div>
+            <div class="float-card absolute left-20 sm:left-24 md:left-28 top-32 sm:top-34 md:top-40 w-28 h-40 md:w-36 md:h-52 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 shadow-2xl flex flex-col justify-end p-3" style="--tilt:10deg; animation-delay:-3.2s">
+                <span class="text-2xl md:text-3xl">📕</span>
+                <p class="text-[10px] md:text-xs font-bold text-white/90 leading-tight mt-1">Sejarah<br>&amp; Biografi</p>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- ===== AKHIR HERO ===== -->
+
+<h2 id="katalog" class="text-2xl md:text-3xl font-bold text-slate-800 mb-5 scroll-mt-20">📖 Katalog Buku</h2>
 
 {% if current_user and current_user.role == 'admin' %}
 <!-- Form Tambah Buku (admin) -->
@@ -54,9 +149,9 @@
     </div>
 </form>
 
-<!-- Tabel Daftar Buku -->
-<div class="bg-white p-4 rounded-xl shadow-md">
-    <div class="overflow-x-auto">
+<!-- Tabel Daftar Buku (menjadi kartu di layar kecil) -->
+<div class="bg-white p-3 sm:p-4 rounded-xl shadow-md">
+    <div class="overflow-x-auto hidden md:block">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-slate-800 text-white">
@@ -68,7 +163,7 @@
                     <th class="p-3 border">ISBN</th>
                     <th class="p-3 border text-center">Stok</th>
                     <th class="p-3 border text-center">Dipinjam</th>
-                    <th class="p-3 border">Status</th>
+                    <th class="p-3 border text-center">Status</th>
                     {% if current_user and current_user.role == 'admin' %}
                     <th class="p-3 border text-center">Aksi</th>
                     {% endif %}
@@ -82,7 +177,7 @@
                         {% if book.cover_data %}
                         <img src="{{ book.cover_data }}" alt="Cover {{ book.title }}" class="w-10 h-14 object-cover rounded mx-auto shadow">
                         {% elif book.cover_url %}
-                        <img src="{{ book.cover_url }}" alt="Cover {{ book.title }}" class="w-10 h-14 object-cover rounded mx-auto shadow" onerror="this.outerHTML='<div class=\"w-10 h-14 rounded bg-slate-200 flex items-center justify-center mx-auto text-lg\">📕</div>'">
+                        <img src="{{ book.cover_url }}" alt="Cover {{ book.title }}" class="w-10 h-14 object-cover rounded mx-auto shadow" onerror="this.outerHTML='<div class=&quot;w-10 h-14 rounded bg-slate-200 flex items-center justify-center mx-auto text-lg&quot;'>📕</div>'">
                         {% else %}
                         <div class="w-10 h-14 rounded bg-slate-200 flex items-center justify-center mx-auto text-lg">📕</div>
                         {% endif %}
@@ -125,6 +220,48 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Tampilan kartu untuk mobile -->
+    <div class="md:hidden space-y-3">
+        {% for book in books %}
+        <div class="border rounded-lg p-3 flex gap-3 items-start bg-slate-50">
+            {% if book.cover_data %}
+            <img src="{{ book.cover_data }}" alt="Cover {{ book.title }}" class="w-14 h-20 object-cover rounded shadow shrink-0">
+            {% elif book.cover_url %}
+            <img src="{{ book.cover_url }}" alt="Cover {{ book.title }}" class="w-14 h-20 object-cover rounded shadow shrink-0">
+            {% else %}
+            <div class="w-14 h-20 rounded bg-slate-200 flex items-center justify-center text-2xl shrink-0">📕</div>
+            {% endif %}
+            <div class="min-w-0 flex-1">
+                <p class="font-semibold text-slate-800 break-words">{{ book.title }}</p>
+                <p class="text-xs text-slate-500">{{ book.author }}{% if book.year %} • {{ book.year }}{% endif %}</p>
+                <div class="flex flex-wrap gap-1.5 mt-1.5">
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-indigo-100 text-indigo-800">{{ book.get('category') or 'Tanpa Kategori' }}</span>
+                    {% if book.display_status == 'Dipinjam' %}
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800">Dipinjam</span>
+                    {% else %}
+                    <span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">Tersedia</span>
+                    {% endif %}
+                </div>
+                <p class="text-xs text-slate-600 mt-1.5">Stok: <b>{{ book.get('stock', 0) }}</b> • Dipinjam: {{ book.loan_count }}{% if book.isbn %} • ISBN: {{ book.isbn }}{% endif %}</p>
+                {% if current_user and current_user.role == 'admin' %}
+                <div class="mt-2 space-x-2">
+                    <a href="/edit/{{ book.id }}" class="text-blue-600 text-sm hover:underline">Edit</a>
+                    <a href="/delete/{{ book.id }}" onclick="return confirm('Yakin ingin menghapus?')" class="text-red-600 text-sm hover:underline">Hapus</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <p class="p-4 text-center text-slate-500 border rounded-lg">
+            {% if current_q or current_category or current_status %}
+            Tidak ada buku yang cocok dengan pencarian/filter.
+            {% else %}
+            Belum ada data buku.
+            {% endif %}
+        </p>
+        {% endfor %}
+    </div>
 </div>
 
 {% if not current_user %}
@@ -132,4 +269,12 @@
     Ingin meminjam buku? <a href="/register" class="text-blue-600 hover:underline">Daftar sebagai anggota</a> atau <a href="/login" class="text-blue-600 hover:underline">masuk</a>.
 </p>
 {% endif %}
+
+<script>
+  // Setelah cari dari hero, gulir otomatis ke katalog
+  if (new URLSearchParams(location.search).has("q")) {
+    const el = document.getElementById("katalog");
+    if (el) { el.scrollIntoView({ behavior: "smooth" }); }
+  }
+</script>
 {% endblock %}

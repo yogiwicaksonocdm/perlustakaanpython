@@ -488,6 +488,8 @@ def index():
 
     books = []
     categories = set()
+    total_books_count = 0
+    total_available = 0
 
     # Hitung jumlah peminjaman aktif per buku
     loan_counts = {}
@@ -502,6 +504,10 @@ def index():
         book_data = doc.to_dict()
         book_data["id"] = doc.id
         categories.add(book_data.get("category") or "Tanpa Kategori")
+        # Statistik untuk hero halaman depan (di-hitung dari seluruh koleksi)
+        total_books_count += 1
+        if int(book_data.get("stock", 0) or 0) > 0:
+            total_available += 1
         # Status tampil mengikuti sisa stok (stok 0 = semua salinan dipinjam)
         book_data["display_status"] = "Tersedia" if int(book_data.get("stock", 0) or 0) > 0 else "Dipinjam"
         book_data["loan_count"] = loan_counts.get(doc.id, 0)
@@ -529,10 +535,17 @@ def index():
         books.append(book_data)
 
     categories = sorted(c for c in categories if c)
+    hero_stats = {
+        "total_books": total_books_count,
+        "total_available": total_available,
+        "total_categories": len(categories),
+    }
     return render_template(
         "index.html",
         books=books,
         categories=categories,
+        top_categories=categories[:6],
+        hero_stats=hero_stats,
         current_q=request.args.get("q", ""),
         current_category=filter_category,
         current_status=filter_status,
