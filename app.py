@@ -1,6 +1,7 @@
 import os
 import json
 import uuid
+import base64
 import datetime
 from functools import wraps
 
@@ -16,6 +17,8 @@ from firebase_admin import credentials, firestore
 app = Flask(__name__)
 # Kunci sesi: WAJIB di-set via env SECRET_KEY saat produksi
 app.secret_key = os.environ.get("SECRET_KEY", "kunci-dev-untuk-lokal-saja")
+# Batas ukuran request (cover + form)
+app.config["MAX_CONTENT_LENGTH"] = 3 * 1024 * 1024  # 3 MB
 
 # Inisialisasi Firebase Admin SDK
 # Memeriksa apakah berjalan di Vercel (via Env Variable) atau Lokal (via file JSON)
@@ -90,6 +93,32 @@ def _now():
 
 def _fmt_date(dt):
     return dt.strftime("%d %b %Y")
+
+
+# --- COVER BUKU ---
+
+ALLOWED_COVER_TYPES = {"image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"}
+MAX_COVER_SIZE = 500 * 1024  # 500 KB
+
+
+def _cover_upload_to_data_uri():
+    """Baca file cover dari form jadi data URI (base64) untuk disimpan di Firestore.
+
+    Mengembalikan (data_uri, pesan_error). Filesystem Vercel bersifat read-only,
+    jadi gambar disimpan langsung di dokumen buku sebagai base64.
+    """
+    file = request.files.get("cover")
+    if not file or not file.filename:
+        return None, None
+    mime = (file.mimetype or "").lower()
+    if mime not in ALLOWED_COVER_TYPES:
+        return None, "Format cover harus PNG, JPG, WebP, atau GIF."
+    data = file.read()
+    if len(data) == 0:
+        return None, "File cover kosong."
+    if len(data) > MAX_COVER_SIZE:
+        return None, "Ukuran cover maksimal 500 KB. Kompres dulu atau gunakan URL gambar."
+    return "data:{};base64,".format(mime) + base64.b64encode(data).decode("ascii"), None
 
 
 # --- ROUTES AUTENTIKASI ---
@@ -483,6 +512,12 @@ def add_book():
     category = request.form.get("category", "").strip()
     stock = request.form.get("stock")
     status = request.form.get("status", "Tersedia")
+    cover_url = request.form.get("cover_url", "").strip()
+
+    cover_data, cover_err = _cover_upload_to_data_uri()
+    if cover_err:
+        flash(cover_err, "error")
+        return redirect(url_for("index"))
 
     if title and author:
         db.collection("books").add({
@@ -492,7 +527,9 @@ def add_book():
             "isbn": isbn,
             "category": category,
             "stock": int(stock) if stock else 0,
-            "status": status
+            "status": status,
+            "cover_data": cover_data or "",
+            "cover_url": cover_url,
         })
         flash("Buku '{}' berhasil ditambahkan.".format(title), "success")
     return redirect(url_for("index"))
@@ -503,7 +540,7 @@ def add_book():
 def edit_book(book_id):
     book_ref = db.collection("books").document(book_id)
     if request.method == "POST":
-        book_ref.update({
+        update_data = {
             "title": request.form.get("title"),
             "author": request.form.get("author"),
             "year": int(request.form.get("year")),
@@ -511,10 +548,23 @@ def edit_book(book_id):
             "category": request.form.get("category", "").strip(),
             "stock": int(request.form.get("stock") or 0),
             "status": request.form.get("status")
-        })
+        }
+        if request.form.get("remove_cover"):
+            update_data["cover_data"] = ""
+            update_data["cover_url"] = ""
+        else:
+            cover_data, cover_err = _cover_upload_to_data_uri()
+            if cover_err:
+                flash(cover_err, "error")
+                return redirect(url_for("edit_book", book_id=book_id))
+            if cover_data:
+                update_data["cover_data"] = cover_data
+            new_cover_url = request.form.get("cover_url", "").strip()
+            if new_cover_url:
+                update_data["cover_url"] = new_cover_url
+        book_ref.update(update_data)
         flash("Data buku diperbarui.", "success")
         return redirect(url_for("index"))
-
     doc = book_ref.get()
     if doc.exists:
         book = doc.to_dict()
