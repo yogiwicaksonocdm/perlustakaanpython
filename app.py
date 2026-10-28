@@ -220,6 +220,7 @@ def admin_dashboard():
     for doc in db.collection(BOOKS).stream():
         data = doc.to_dict()
         data["id"] = doc.id
+        data["display_status"] = "Tersedia" if int(data.get("stock", 0) or 0) > 0 else "Dipinjam"
         books.append(data)
 
     members = []
@@ -247,9 +248,19 @@ def admin_dashboard():
     }
 
     active_members = [m for m in members if m.get("active", True)]
+    # Buku yang bisa dipinjam = punya stok tersedia > 0
     available_books = sorted(
-        [b for b in books if b.get("status", "Tersedia") == "Tersedia"],
+        [b for b in books if int(b.get("stock", 0) or 0) > 0],
         key=lambda b: b.get("title", "").lower())
+
+    # Jumlah peminjaman aktif per buku
+    loan_counts = {}
+    for loan in active_loans:
+        bid = loan.get("book_id")
+        if bid:
+            loan_counts[bid] = loan_counts.get(bid, 0) + 1
+    for b in books:
+        b["loan_count"] = loan_counts.get(b["id"], 0)
 
     return render_template(
         "admin.html",
@@ -408,8 +419,11 @@ def admin_add_loan():
     if not member.get("active", True):
         flash("Anggota sedang diblokir.", "error")
         return redirect(url_for("admin_dashboard"))
-    if book.get("status", "Tersedia") != "Tersedia":
-        flash("Stok buku sedang tidak tersedia (semua sedang dipinjam).", "error")
+
+    # Stok tersedia harus > 0 boleh dipinjam (bisa menghadang stok >= 1)
+    current_stock = int(book.get("stock", 0) or 0)
+    if current_stock <= 0:
+        flash("Stok buku sudah habis — semua salinan sedang dipinjam.", "error")
         return redirect(url_for("admin_dashboard"))
 
     now = _now()
@@ -423,8 +437,14 @@ def admin_add_loan():
         "status": "dipinjam",
         "return_date": "",
     })
-    db.collection(BOOKS).document(book_id).update({"status": "Dipinjam"})
-    flash("Peminjaman '{}' oleh {} dicatat.".format(book.get("title"), member.get("name")), "success")
+    # Stok berkurang 1; status jadi Dipinjam hanya jika stok habis
+    new_stock = current_stock - 1
+    db.collection(BOOKS).document(book_id).update({
+        "stock": new_stock,
+        "status": "Dipinjam" if new_stock == 0 else "Tersedia",
+    })
+    flash("Peminjaman '{}' oleh {} dicatat. Sisa stok: {}".format(
+        book.get("title"), member.get("name"), new_stock), "success")
     return redirect(url_for("admin_dashboard"))
 
 
@@ -447,8 +467,12 @@ def admin_return_loan(loan_id):
         "status": "kembali",
         "return_date": _fmt_date(_now()),
     })
+    # Stok bertambah 1 saat buku dikembalikan
     if loan.get("book_id"):
-        db.collection(BOOKS).document(loan["book_id"]).update({"status": "Tersedia"})
+        book_ref = db.collection(BOOKS).document(loan["book_id"])
+        book_doc = book_ref.get()
+        current_stock = int(book_doc.to_dict().get("stock", 0) or 0) if book_doc.exists else 0
+        book_ref.update({"stock": current_stock + 1, "status": "Tersedia"})
     flash("Buku '{}' dikembalikan.".format(loan.get("book_title")), "success")
     return redirect(url_for("admin_dashboard"))
 
@@ -464,10 +488,23 @@ def index():
 
     books = []
     categories = set()
+
+    # Hitung jumlah peminjaman aktif per buku
+    loan_counts = {}
+    for doc in db.collection(LOANS).stream():
+        loan_data = doc.to_dict()
+        if loan_data.get("status", "dipinjam") == "dipinjam":
+            bid = loan_data.get("book_id")
+            if bid:
+                loan_counts[bid] = loan_counts.get(bid, 0) + 1
+
     for doc in db.collection("books").stream():
         book_data = doc.to_dict()
         book_data["id"] = doc.id
         categories.add(book_data.get("category") or "Tanpa Kategori")
+        # Status tampil mengikuti sisa stok (stok 0 = semua salinan dipinjam)
+        book_data["display_status"] = "Tersedia" if int(book_data.get("stock", 0) or 0) > 0 else "Dipinjam"
+        book_data["loan_count"] = loan_counts.get(doc.id, 0)
 
         # Filter pencarian (judul, penulis, atau ISBN)
         if q:
@@ -485,8 +522,8 @@ def index():
             if book_category != filter_category:
                 continue
 
-        # Filter status (Tersedia / Dipinjam)
-        if filter_status and book_data.get("status", "Tersedia") != filter_status:
+        # Filter status (Tersedia / Dipinjam) mengikuti sisa stok
+        if filter_status and book_data["display_status"] != filter_status:
             continue
 
         books.append(book_data)
