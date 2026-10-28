@@ -4,7 +4,7 @@
 <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-md">
     <h1 class="text-2xl font-bold text-slate-800 mb-6">✏️ Edit Data Buku</h1>
 
-    <form action="/edit/{{ book.id }}" method="POST" class="space-y-4">
+    <form action="/edit/{{ book.id }}" method="POST" enctype="multipart/form-data" class="space-y-4">
         <div>
             <label class="block text-sm font-medium text-slate-700">Judul Buku</label>
             <input type="text" name="title" value="{{ book.title }}" required class="w-full p-2 border rounded mt-1">
@@ -16,6 +16,27 @@
         <div>
             <label class="block text-sm font-medium text-slate-700">Kategori</label>
             <input type="text" name="category" value="{{ book.get('category', '') }}" placeholder="Mis. Novel, Sains, Sejarah" class="w-full p-2 border rounded mt-1">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-slate-700">Cover Buku</label>
+            {% if book.cover_data %}
+            <img src="{{ book.cover_data }}" alt="Cover saat ini" class="w-20 h-28 object-cover rounded shadow mt-1">
+            {% elif book.cover_url %}
+            <img src="{{ book.cover_url }}" alt="Cover saat ini" class="w-20 h-28 object-cover rounded shadow mt-1">
+            {% else %}
+            <div class="w-20 h-28 rounded bg-slate-200 flex items-center justify-center mt-1 text-2xl">📕</div>
+            {% endif %}
+
+            <label class="block text-xs text-slate-500 mt-3">Ganti cover (PNG/JPG/WebP/GIF, maks. 500 KB)</label>
+            <input type="file" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full p-2 border rounded mt-1 text-sm">
+
+            <label class="block text-xs text-slate-500 mt-3">Atau isi URL gambar cover</label>
+            <input type="text" name="cover_url" value="{{ book.cover_url or '' }}" placeholder="https://contoh.com/cover.jpg" class="w-full p-2 border rounded mt-1 text-sm">
+
+            <label class="inline-flex items-center gap-2 mt-2 text-sm text-slate-700">
+                <input type="checkbox" name="remove_cover" value="1" class="rounded">
+                Hapus cover saat ini
+            </label>
         </div>
         <div>
             <label class="block text-sm font-medium text-slate-700">Tahun Terbit</label>

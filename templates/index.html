@@ -5,13 +5,18 @@
 
 {% if current_user and current_user.role == 'admin' %}
 <!-- Form Tambah Buku (admin) -->
-<form action="/add" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 bg-slate-50 p-4 rounded-lg border">
+<form action="/add" method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 bg-slate-50 p-4 rounded-lg border">
     <input type="text" name="title" placeholder="Judul Buku" required class="p-2 border rounded focus:outline-blue-500">
     <input type="text" name="author" placeholder="Penulis" required class="p-2 border rounded focus:outline-blue-500">
     <input type="number" name="year" placeholder="Tahun Terbit" class="p-2 border rounded focus:outline-blue-500">
     <input type="text" name="isbn" placeholder="ISBN" class="p-2 border rounded focus:outline-blue-500">
     <input type="text" name="category" placeholder="Kategori (mis. Novel, Sains)" list="category-list" class="p-2 border rounded focus:outline-blue-500">
     <input type="number" name="stock" placeholder="Jumlah Stok" min="0" class="p-2 border rounded focus:outline-blue-500">
+    <div class="md:col-span-2">
+        <label class="block text-xs text-slate-500 mb-1">Cover (PNG/JPG/WebP/GIF, maks. 500 KB)</label>
+        <input type="file" name="cover" accept="image/png,image/jpeg,image/webp,image/gif" class="w-full p-2 border rounded text-sm bg-white">
+    </div>
+    <input type="text" name="cover_url" placeholder="URL Cover (opsional)" class="p-2 border rounded focus:outline-blue-500">
     <select name="status" class="p-2 border rounded bg-white focus:outline-blue-500">
         <option value="Tersedia" selected>Tersedia</option>
         <option value="Dipinjam">Dipinjam</option>
@@ -56,6 +61,7 @@
             <thead>
                 <tr class="bg-slate-800 text-white">
                     <th class="p-3 border">Judul</th>
+                    <th class="p-3 border text-center">Cover</th>
                     <th class="p-3 border">Penulis</th>
                     <th class="p-3 border">Kategori</th>
                     <th class="p-3 border">Tahun</th>
@@ -71,6 +77,15 @@
                 {% for book in books %}
                 <tr class="hover:bg-slate-50 border-b">
                     <td class="p-3 font-semibold text-slate-700">{{ book.title }}</td>
+                    <td class="p-3 text-center">
+                        {% if book.cover_data %}
+                        <img src="{{ book.cover_data }}" alt="Cover {{ book.title }}" class="w-10 h-14 object-cover rounded mx-auto shadow">
+                        {% elif book.cover_url %}
+                        <img src="{{ book.cover_url }}" alt="Cover {{ book.title }}" class="w-10 h-14 object-cover rounded mx-auto shadow" onerror="this.outerHTML='<div class=\"w-10 h-14 rounded bg-slate-200 flex items-center justify-center mx-auto text-lg\">📕</div>'">
+                        {% else %}
+                        <div class="w-10 h-14 rounded bg-slate-200 flex items-center justify-center mx-auto text-lg">📕</div>
+                        {% endif %}
+                    </td>
                     <td class="p-3 text-slate-600">{{ book.author }}</td>
                     <td class="p-3">
                         <span class="px-2 py-1 text-xs rounded-full bg-indigo-100 text-indigo-800">
@@ -96,7 +111,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="{{ 9 if current_user and current_user.role == 'admin' else 8 }}" class="p-4 text-center text-slate-500">
+                    <td colspan="{{ 10 if current_user and current_user.role == 'admin' else 9 }}" class="p-4 text-center text-slate-500">
                         {% if current_q or current_category or current_status %}
                         Tidak ada buku yang cocok dengan pencarian/filter.
                         {% else %}
